@@ -1,0 +1,64 @@
+#!/bin/bash
+
+url=$1
+output=$2
+
+#Get html from web
+wget -O temp.txt $url
+
+#get relevant part of site
+sed -i -n '/<div class="article-content-offset">/,/<div class="loading-indicator" role="alert">/p' temp.txt
+
+#title
+title=$(grep -o '<h1 class="f-serif ls-0 article-title pt-2" data-drupal-page-title>.*</h1>' temp.txt | sed 's/\(<h1 class="f-serif ls-0 article-title pt-2" data-drupal-page-title>\|<\/h1>\)//g')
+
+#subtitle
+subtitle=$(grep -o '<h2 class="f-serif ls-0 article-subtitle ">.*</h2>' temp.txt | sed 's/\(<h2 class="f-serif ls-0 article-subtitle ">\|<\/h2>\)//g')
+
+#author
+author=$(grep -o '<a href="#author-info" class="article-byline-author b4-l">[^<]*</a>' temp.txt | sed 's/\(<a href="#author-info" class="article-byline-author b4-l">\|<\/a>\)//g')
+
+#date
+publishdate=$(grep -o '<time datetime=[^>]*>.*</time>' temp.txt | sed 's/\(<time datetime=[^>]*>\|<\/time>\)//g')
+
+#remove everything before and after relavent tags
+sed -i -e 's/.*<div class="article-content-offset">//' temp.txt
+sed -i -e 's/<div class="loading-indicator" role="alert">.*//' temp.txt
+
+#add relevant newlines and subheadings
+sed -i -e 's/<p>/\n\n/g' temp.txt
+sed -i -e 's/<h3>/\n\n### /g' temp.txt
+
+#remove google tags
+sed -i -e '/^googletag.*/d' temp.txt
+sed -i -e '/^});/d' temp.txt
+
+#remove other stuff
+sed -i -e '/<blockquote class="internal-blockquote offset ls-narrow">/d' temp.txt
+sed -i -e '/^<\/script><\/div><\/div>/d' temp.txt
+sed -i -e '/<figure class="article-inline-img-block print-hidden">/d' temp.txt
+
+#remove extra tags
+sed -i -e 's/<[^>]*>//g' temp.txt
+
+#make YAML header and append it to the beginning of file
+echo "---" >header.txt
+echo "title: ${title}" >>header.txt
+echo "author: ${author}" >>header.txt
+echo "date: ${publishdate}" >>header.txt
+echo "subtitle: ${subtitle}" >>header.txt
+echo "geometry: margin=1in" >>header.txt
+echo "..." >>header.txt
+
+cat header.txt
+echo
+
+cat header.txt temp.txt >final.txt
+
+#make pdf 
+pandoc final.txt -o $output.pdf
+
+#clean up
+rm header.txt
+rm temp.txt
+rm final.txt
