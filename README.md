@@ -1,2 +1,3 @@
 # article
-turns an article into a pdf
+turns certain articles into nicely formatted LaTeX pdfs
+
