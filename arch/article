@@ -27,7 +27,8 @@ sed -i -e 's/<div class="loading-indicator" role="alert">.*//' temp.txt
 
 #add relevant newlines and subheadings
 sed -i -e 's/<p>/\n\n/g' temp.txt
-sed -i -e 's/<h3>/\n\n### /g' temp.txt
+sed -i -e 's/<h3>/\n\n\\\subsection\*{\\uppercase{/g' temp.txt
+sed -i -e '/subsection\*{/ s/$/}}/g' temp.txt
 
 #remove google tags
 sed -i -e '/^googletag.*/d' temp.txt
@@ -41,24 +42,51 @@ sed -i -e '/<figure class="article-inline-img-block print-hidden">/d' temp.txt
 #remove extra tags
 sed -i -e 's/<[^>]*>//g' temp.txt
 
-#make YAML header and append it to the beginning of file
-echo "---" >header.txt
-echo "title: ${title}" >>header.txt
-echo "author: ${author}" >>header.txt
-echo "date: ${publishdate}" >>header.txt
-echo "subtitle: ${subtitle}" >>header.txt
-echo "geometry: margin=1in" >>header.txt
-echo "..." >>header.txt
-
-cat header.txt
+#this used to be the YAML header for pandoc but now it's just to print to the standard outpute
+echo
+echo "---" 
+echo "title: ${title}" 
+echo "author: ${author}" 
+echo "date: ${publishdate}" 
+echo "subtitle: ${subtitle}"
+echo "geometry: margin=1in"
+echo "..." 
 echo
 
+#make latex header so we can use pdflatex
+echo "\\documentclass[]{article}" >header.txt
+echo >>header.txt
+echo "\\usepackage{geometry}" >>header.txt
+#echo "\\usepackage{titlesec}" >>header.txt
+echo "\\usepackage{multicol}" >>header.txt
+echo >>header.txt
+echo "\\geometry{letterpaper}" >>header.txt
+echo "\\geometry{margin=1in}" >>header.txt
+echo '' >>header.txt
+echo "\\title{${title}}" >>header.txt
+echo "\\author{${author}}" >>header.txt
+echo "\\date{${publishdate}}" >>header.txt
+#echo "subtitle: ${subtitle}" >>header.txt
+echo >>header.txt
+echo "\\begin{document}" >>header.txt
+echo "\\maketitle" >>header.txt
+echo "\\begin{multicols}{2}" >>header.txt
+echo >>header.txt
+echo >>header.txt
+
+#tack on article body with couple last things
 cat header.txt temp.txt >final.txt
+echo "\\end{multicols}" >>final.txt
+echo "\\end{document}" >>final.txt
 
 #make pdf 
-pandoc final.txt -o $output.pdf
+pdflatex final.txt
+mv final.pdf $output.pdf
 
 #clean up
 rm header.txt
 rm temp.txt
+rm final.aux
+rm final.log
 rm final.txt
+
