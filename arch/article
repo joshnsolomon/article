@@ -39,6 +39,12 @@ sed -i -e '/<blockquote class="internal-blockquote offset ls-narrow">/d' temp.tx
 sed -i -e '/^<\/script><\/div><\/div>/d' temp.txt
 sed -i -e '/<figure class="article-inline-img-block print-hidden">/d' temp.txt
 
+#escape some characters
+sed -i -e 's/\$/\\\$/g' temp.txt
+sed -i -e 's/\#/\\\#/g' temp.txt
+sed -i -e 's/\%/\\\%/g' temp.txt
+sed -i -e 's/\&/\\\&/g' temp.txt
+
 #remove extra tags
 sed -i -e 's/<[^>]*>//g' temp.txt
 
@@ -63,7 +69,7 @@ echo >>header.txt
 echo "\\geometry{letterpaper}" >>header.txt
 echo "\\geometry{margin=1in}" >>header.txt
 echo '' >>header.txt
-echo "\\title{${title}}" >>header.txt
+echo "\\title{${title} \\\\ \\large ${subtitle}}" >>header.txt
 echo "\\author{${author}}" >>header.txt
 echo "\\date{${publishdate}}" >>header.txt
 #echo "subtitle: ${subtitle}" >>header.txt
